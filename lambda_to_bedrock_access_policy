@@ -1,0 +1,6 @@
+#Add at the end of policy statement for role created while creating lambda
+{
+     "Effect": "Allow",
+     "Action": "bedrock:InvokeModel",
+     "Resource": "*"
+}

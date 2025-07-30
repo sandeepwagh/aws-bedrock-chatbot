@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alpine Chatbot SPA - Dark Mode</title>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom right, #111827, #1f2937);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: white;
+    }
+
+    .chat-container {
+      width: 95%;
+      max-width: 600px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+      background-color: #1e293b;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      scroll-behavior: smooth;
+    }
+
+    .chat-message {
+      margin-bottom: 12px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    .user {
+      text-align: right;
+      color: #60a5fa;
+    }
+
+    .bot {
+      text-align: left;
+      color: #f9fafb;
+    }
+
+    .chat-input {
+      display: flex;
+      border-top: 1px solid #334155;
+      background-color: #0f172a;
+    }
+
+    .chat-input input {
+      flex: 1;
+      border: none;
+      padding: 15px;
+      font-size: 16px;
+      background-color: #0f172a;
+      color: white;
+    }
+
+    .chat-input input::placeholder {
+      color: #94a3b8;
+    }
+
+    .chat-input input:focus {
+      outline: none;
+    }
+
+    .chat-input button {
+      padding: 0 20px;
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .chat-input button:hover {
+      background-color: #2563eb;
+    }
+
+    @media screen and (max-width: 480px) {
+      .chat-container {
+        height: 100vh;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="chat-container" x-data="chatApp()">
+  <!-- Messages -->
+  <div class="chat-messages" x-ref="chatbox">
+    <template x-for="msg in messages" :key="msg.id">
+      <div class="chat-message" :class="msg.sender">
+        <div x-text="msg.text"></div>
+      </div>
+    </template>
+  </div>
+
+  <!-- Input -->
+  <div class="chat-input">
+    <input type="text" placeholder="Type your message..." x-model="input" @keydown.enter="sendMessage" />
+    <button @click="sendMessage">Send</button>
+  </div>
+</div>
+
+<script>
+  function chatApp() {
+    return {
+      input: '',
+      messages: [],
+      sendMessage() {
+        if (!this.input.trim()) return;
+
+        const userMsg = { id: Date.now(), sender: 'user', text: this.input };
+        this.messages.push(userMsg);
+
+        const userInput = this.input;
+        this.input = '';
+        this.$nextTick(() => this.scrollToBottom());
+
+        // 🛰️ Call your backend API
+        fetch('https://httpbin.org/post', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: userInput })
+        })
+        .then(res => res.json())
+        .then(data => {
+            this.messages.push({
+            id: Date.now() + 1,
+            sender: 'bot',
+            text: data.reply || '[No response from bot]'
+            });
+            this.$nextTick(() => this.scrollToBottom());
+        })
+        .catch(err => {
+            console.error('API error:', err);
+            this.messages.push({
+            id: Date.now() + 2,
+            sender: 'bot',
+            text: '⚠️ Sorry, something went wrong contacting the API.'
+            });
+            this.$nextTick(() => this.scrollToBottom());
+        });
+        },
+      scrollToBottom() {
+        this.$refs.chatbox.scrollTop = this.$refs.chatbox.scrollHeight;
+      }
+    };
+  }
+</script>
+
+</body>
+</html>
